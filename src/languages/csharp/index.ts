@@ -9,7 +9,7 @@ import {
 import { Language } from "../../common/Language";
 
 import emitProgram from "./emit";
-import { mapOps, plus1, useIndexCalls } from "../../plugins/ops";
+import { mapOps, useIndexCalls } from "../../plugins/ops";
 import { renameIdents } from "../../plugins/idents";
 import { tempVarToMultipleAssignment } from "../../plugins/tempVariables";
 import {
@@ -18,6 +18,8 @@ import {
 } from "../../plugins/static";
 import { divToTruncdiv, modToRem } from "../../plugins/divisionOps";
 import { forRangeToForCLike } from "../../plugins/loops";
+import { addVarDeclarations } from "./plugins";
+import { addMutatingBinaryOp } from "../../plugins/binaryOps";
 
 const csharpLanguage: Language = {
   name: "C#",
@@ -26,7 +28,7 @@ const csharpLanguage: Language = {
     tempVarToMultipleAssignment,
     modToRem,
     divToTruncdiv,
-    golfStringListLiteral,
+    golfStringListLiteral(false),
     forRangeToForCLike,
     useIndexCalls(),
     mapOps([
@@ -66,13 +68,15 @@ const csharpLanguage: Language = {
       ["and", "&&"],
       ["or", "||"],
       ["not", "!"],
-      ["text_concat", "+"],
+      ["text_concat", ["+", 100, false]],
       ["neg", "-"],
       ["bit_not", "~"],
       ["text_to_int", (x) => methodCall(x[0], [], "ToString")],
       ["argv", (x) => id("argv", true)],
     ]),
+    addMutatingBinaryOp,
     evalStaticIntegers,
+    addVarDeclarations,
     renameIdents(),
   ],
 };

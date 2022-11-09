@@ -34,7 +34,7 @@ const nimLanguage: Language = {
     modToRem,
     divToTruncdiv,
     useInclusiveForRange,
-    golfStringListLiteral,
+    golfStringListLiteral(),
     useIndexCalls(),
     mapOps([
       [

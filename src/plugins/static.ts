@@ -11,37 +11,39 @@ import {
 } from "../IR";
 import { Path, Visitor } from "../common/traverse";
 
-const golfedStringListLiterals = new WeakMap();
-export const golfStringListLiteral: Visitor = {
-  generatesVariants: true,
-  exit(path: Path) {
-    const node = path.node;
-    if (
-      node.type === "ListConstructor" &&
-      node.exprs.every((x) => x.type === "StringLiteral") &&
-      !golfedStringListLiterals.has(node)
-    ) {
-      golfedStringListLiterals.set(node, true);
-      const strings = (node.exprs as StringLiteral[]).map((x) => x.value);
-      const delim = getDelim(strings);
-      path.replaceWith(
-        variants([
-          node,
-          delim === " "
-            ? polygolfOp(
-                "text_split_whitespace",
-                stringLiteral(strings.join(delim))
-              )
-            : polygolfOp(
-                "text_split",
-                stringLiteral(strings.join(delim)),
-                stringLiteral(delim)
-              ),
-        ])
-      );
-    }
-  },
-};
+export function golfStringListLiteral(useWhitespaceSplit = true) {
+  const golfedStringListLiterals = new WeakMap();
+  return {
+    generatesVariants: true,
+    exit(path: Path) {
+      const node = path.node;
+      if (
+        node.type === "ListConstructor" &&
+        node.exprs.every((x) => x.type === "StringLiteral") &&
+        !golfedStringListLiterals.has(node)
+      ) {
+        golfedStringListLiterals.set(node, true);
+        const strings = (node.exprs as StringLiteral[]).map((x) => x.value);
+        const delim = getDelim(strings);
+        path.replaceWith(
+          variants([
+            node,
+            delim === " " && useWhitespaceSplit
+              ? polygolfOp(
+                  "text_split_whitespace",
+                  stringLiteral(strings.join(delim))
+                )
+              : polygolfOp(
+                  "text_split",
+                  stringLiteral(strings.join(delim)),
+                  stringLiteral(delim)
+                ),
+          ])
+        );
+      }
+    },
+  };
+}
 
 function getDelim(strings: string[]): string {
   const string = strings.join();

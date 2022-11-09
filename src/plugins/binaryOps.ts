@@ -19,7 +19,12 @@ export const addMutatingBinaryOp = {
             JSON.stringify(node.expr.left.index))
       ) {
         path.replaceWith(
-          mutatingBinaryOp(node.expr.op, node.variable, node.expr.right)
+          mutatingBinaryOp(
+            node.expr.op,
+            node.variable,
+            node.expr.right,
+            node.expr.name
+          )
         );
       }
       // "a = b + a" --> "a += b"

@@ -15,7 +15,25 @@ function emitExpr(
   parent: IR.Node,
   fragment?: PathFragment
 ): string[] {
+  if (expr.type === "Block") {
+    if (parent.type !== "Program") {
+      return [
+        "{",
+        ...joinGroups(expr.children.map((x) => emitExpr(x, expr, "body"))),
+        "}",
+      ];
+    }
+    return [...joinGroups(expr.children.map((x) => emitExpr(x, expr, "body")))];
+  }
   const inner = emitExprNoParens(expr);
+  if (
+    (fragment === "body" ||
+      fragment === "consequent" ||
+      fragment === "alternate" ||
+      parent.type === "Block") &&
+    !("body" in expr || "consequent" in expr || "alternate" in expr)
+  )
+    inner.push(";");
   return needsParens(expr, parent, fragment) ? ["(", ...inner, ")"] : inner;
 }
 
@@ -31,13 +49,9 @@ function needsParens(
   if (needsParensPrecedence(expr, parent, fragment)) {
     return true;
   }
-  if (
-    parent.type === "MethodCall" &&
-    expr === parent.object &&
-    expr.type !== "Identifier" &&
-    expr.type !== "IndexCall"
-  )
-    return true;
+  if (parent.type === "MethodCall" && fragment === "object") {
+    return expr.type === "UnaryOp" || expr.type === "BinaryOp";
+  }
   return false;
 }
 
@@ -65,10 +79,14 @@ function emitExprNoParens(expr: IR.Expr): string[] {
     );
   }
   switch (expr.type) {
-    case "Block":
-      return join(expr.children, ";");
     case "WhileLoop":
-      return emit(`while`, expr.condition, "do", expr.body, "end");
+      return emit(
+        `while`,
+        expr.condition,
+        "do",
+        emitExpr(expr.body, expr, "body"),
+        "end"
+      );
     case "ManyToManyAssignment":
       return emit(
         "(",
@@ -85,8 +103,10 @@ function emitExprNoParens(expr: IR.Expr): string[] {
         "(",
         expr.condition,
         ")",
-        expr.consequent,
-        expr.alternate !== undefined ? ["else", expr.alternate] : []
+        emitExpr(expr.consequent, expr, "consequent"),
+        expr.alternate !== undefined
+          ? ["else", ...emitExpr(expr.alternate, expr, "alternate")]
+          : []
       );
     case "Variants":
       throw new Error("Variants should have been instantiated.");
@@ -104,10 +124,12 @@ function emitExprNoParens(expr: IR.Expr): string[] {
         ";",
         expr.append,
         ")",
-        expr.body
+        emitExpr(expr.body, expr, "body")
       );
     case "Assignment":
       return emit(expr.variable, "=", expr.expr);
+    case "VarDeclarationWithAssignment":
+      return emit("var", expr.assignments);
     case "Identifier":
       return [expr.name];
     case "StringLiteral":
@@ -151,6 +173,12 @@ function emitExprNoParens(expr: IR.Expr): string[] {
         expr.name,
         emitExpr(expr.right, expr, "right")
       );
+    case "MutatingBinaryOp":
+      return emit(
+        emitExpr(expr.variable, expr, "left"),
+        expr.name + "=",
+        emitExpr(expr.right, expr, "right")
+      );
     case "UnaryOp":
       return emit(expr.name, expr.arg);
     case "IndexCall":
@@ -160,7 +188,9 @@ function emitExprNoParens(expr: IR.Expr): string[] {
     case "ListConstructor":
       return emit(
         "new List<",
-        emitType(expr.valueType),
+        expr.valueType !== undefined && "member" in expr.valueType
+          ? emitType(expr.valueType.member)
+          : "?",
         ">()",
         "{",
         join(expr.exprs, ","),
