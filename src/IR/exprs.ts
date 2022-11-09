@@ -40,6 +40,7 @@ export interface MethodCall extends BaseExpr {
   op: OpCode | null;
   object: Expr;
   args: Expr[];
+  property: boolean;
 }
 
 export interface IndexCall extends BaseExpr {
@@ -147,6 +148,21 @@ export function methodCall(
     ident: typeof ident === "string" ? id(ident, true) : ident,
     object,
     args,
+    property: false,
+  };
+}
+export function propertyCall(
+  object: Expr,
+  ident: string | Identifier,
+  op?: OpCode
+): MethodCall {
+  return {
+    type: "MethodCall",
+    op: op === undefined ? null : op,
+    ident: typeof ident === "string" ? id(ident, true) : ident,
+    object,
+    args: [],
+    property: true,
   };
 }
 

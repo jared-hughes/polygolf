@@ -1,0 +1,80 @@
+import {
+  functionCall,
+  id,
+  indexCall,
+  methodCall,
+  polygolfOp,
+  propertyCall,
+} from "../../IR";
+import { Language } from "../../common/Language";
+
+import emitProgram from "./emit";
+import { mapOps, plus1, useIndexCalls } from "../../plugins/ops";
+import { renameIdents } from "../../plugins/idents";
+import { tempVarToMultipleAssignment } from "../../plugins/tempVariables";
+import {
+  evalStaticIntegers,
+  golfStringListLiteral,
+} from "../../plugins/static";
+import { divToTruncdiv, modToRem } from "../../plugins/divisionOps";
+import { forRangeToForCLike } from "../../plugins/loops";
+
+const csharpLanguage: Language = {
+  name: "C#",
+  emitter: emitProgram,
+  plugins: [
+    tempVarToMultipleAssignment,
+    modToRem,
+    divToTruncdiv,
+    golfStringListLiteral,
+    forRangeToForCLike,
+    useIndexCalls(),
+    mapOps([
+      [
+        "text_get_slice",
+        (x) =>
+          methodCall(x[0], [x[1], polygolfOp("add", x[1], x[2])], "Substring"),
+      ],
+    ]),
+    mapOps([
+      ["argv_get", (x) => indexCall(id("arg", true), x[0])],
+      ["true", (_) => id("true", true)],
+      ["false", (_) => id("false", true)],
+      ["text_length", (x) => propertyCall(x[0], "Length")],
+      ["text_split", (x) => methodCall(x[0], [x[1]], "Split")],
+      ["int_to_text", (x) => functionCall(x, "int.Parse")],
+      ["repeat", (x) => functionCall(x, "new String")],
+      ["print", (x) => functionCall(x, "Console.Write")],
+      ["println", (x) => functionCall(x, "Console.WriteLine")],
+      ["min", (x) => functionCall(x, "Math.Min")],
+      ["max", (x) => functionCall(x, "Math.Max")],
+      ["abs", (x) => functionCall(x, "Math.Abs")],
+      ["add", "+"],
+      ["sub", "-"],
+      ["mul", "*"],
+      ["trunc_div", "/"],
+      ["pow", (x) => functionCall(x, "Math.Pow")],
+      ["rem", "%"],
+      ["bit_and", "&"],
+      ["bit_or", "|"],
+      ["bit_xor", "^"],
+      ["lt", "<"],
+      ["leq", "<="],
+      ["eq", "=="],
+      ["geq", ">="],
+      ["gt", ">"],
+      ["and", "&&"],
+      ["or", "||"],
+      ["not", "!"],
+      ["text_concat", "+"],
+      ["neg", "-"],
+      ["bit_not", "~"],
+      ["text_to_int", (x) => methodCall(x[0], [], "ToString")],
+      ["argv", (x) => id("argv", true)],
+    ]),
+    evalStaticIntegers,
+    renameIdents(),
+  ],
+};
+
+export default csharpLanguage;

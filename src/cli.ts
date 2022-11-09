@@ -8,9 +8,10 @@ import applyLanguage from "./common/applyLanguage";
 
 import lua from "./languages/lua";
 import nim from "./languages/nim";
+import csharp from "./languages/csharp";
 import { PolygolfError } from "./common/errors";
 
-const languageTable = { lua, nim };
+const languageTable = { lua, nim, csharp };
 
 const options = yargs()
   .options({
