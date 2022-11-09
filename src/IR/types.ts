@@ -197,7 +197,9 @@ export function union(a: ValueType, b: ValueType): ValueType {
 }
 
 /** Determines if `a` is a subtype of `b`. */
-export function isSubtype(a: ValueType, b: ValueType): boolean {
+export function isSubtype(a: ValueType, b: ValueType | "int64"): boolean {
+  if (b === "int64")
+    b = integerType(-9223372036854775808n, 9223372036854775807n);
   if (
     (a.type === "Set" && b.type === "Set") ||
     (a.type === "List" && b.type === "List")

@@ -4,7 +4,7 @@ import {
   joinGroups,
   needsParensPrecedence,
 } from "../../common/emit";
-import { Expr, IR, ValueType } from "../../IR";
+import { Expr, IR, isSubtype, toString, ValueType } from "../../IR";
 
 export default function emitProgram(program: IR.Program): string[] {
   return emitExpr(program.body, program);
@@ -82,10 +82,10 @@ function emitExprNoParens(expr: IR.Expr): string[] {
     case "WhileLoop":
       return emit(
         `while`,
+        "(",
         expr.condition,
-        "do",
-        emitExpr(expr.body, expr, "body"),
-        "end"
+        ")",
+        emitExpr(expr.body, expr, "body")
       );
     case "ManyToManyAssignment":
       return emit(
@@ -187,11 +187,9 @@ function emitExprNoParens(expr: IR.Expr): string[] {
       return emit(expr.collection, "[", expr.index, "]");
     case "ListConstructor":
       return emit(
-        "new List<",
-        expr.valueType !== undefined && "member" in expr.valueType
-          ? emitType(expr.valueType.member)
-          : "?",
-        ">()",
+        "new",
+        emitType(expr.valueType),
+        "()",
         "{",
         join(expr.exprs, ","),
         "}"
@@ -206,8 +204,26 @@ function emitExprNoParens(expr: IR.Expr): string[] {
   }
 }
 
-function emitType(valueType: ValueType | undefined): string {
-  if (valueType === undefined) return "?";
-  if (valueType.type === "text") return "string";
-  return "TODO";
+function emitType(type: ValueType | undefined): string {
+  if (type === undefined) return "?";
+  switch (type.type) {
+    case "text":
+      return "string";
+    case "integer":
+      if (isSubtype(type, "int64")) return "int";
+      break;
+    case "boolean":
+      return "string";
+    case "void":
+      return "void";
+    case "Array":
+      return `${emitType(type.member)}[${type.length}]`;
+    case "List":
+      return `List<${emitType(type.member)}>`;
+    case "Set":
+      return `HashSet<${emitType(type.member)}>`;
+    case "Table":
+      return `HashMap<${emitType(type.key)},${emitType(type.value)}>`;
+  }
+  throw new Error(`Cannot emit type ${toString(type)} to C#.`);
 }
