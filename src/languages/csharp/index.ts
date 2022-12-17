@@ -46,7 +46,7 @@ const csharpLanguage: Language = {
         (x) =>
           methodCall(
             x[0],
-            x[1].kind === "StringLiteral" && x[1].value.length == 1
+            x[1].kind === "StringLiteral" && x[1].value.length === 1
               ? [{ ...x[1], isCharacter: true }]
               : [x[1], id("default", true)],
             "Split"
