@@ -12,10 +12,7 @@ import emitProgram from "./emit";
 import { mapOps, useIndexCalls } from "../../plugins/ops";
 import { renameIdents } from "../../plugins/idents";
 import { tempVarToMultipleAssignment } from "../../plugins/tempVariables";
-import {
-  evalStaticIntegers,
-  golfStringListLiteral,
-} from "../../plugins/static";
+import { evalStaticExpr, golfStringListLiteral } from "../../plugins/static";
 import { divToTruncdiv, modToRem } from "../../plugins/divisionOps";
 import { forRangeToForCLike } from "../../plugins/loops";
 import { addVarDeclarations } from "./plugins";
@@ -76,7 +73,7 @@ const csharpLanguage: Language = {
       ["argv", (x) => id("argv", true)],
     ]),
     addMutatingBinaryOp,
-    evalStaticIntegers,
+    evalStaticExpr,
     addVarDeclarations,
     renameIdents(),
   ],

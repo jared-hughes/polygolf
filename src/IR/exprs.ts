@@ -157,7 +157,7 @@ export function propertyCall(
   op?: OpCode
 ): MethodCall {
   return {
-    type: "MethodCall",
+    kind: "MethodCall",
     op: op === undefined ? null : op,
     ident: typeof ident === "string" ? id(ident, true) : ident,
     object,

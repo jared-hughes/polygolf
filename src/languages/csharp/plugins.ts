@@ -5,17 +5,17 @@ const declared: Set<string> = new Set<string>();
 export const addVarDeclarations = {
   enter(path: Path) {
     const node = path.node;
-    if (node.type === "Program") {
+    if (node.kind === "Program") {
       declared.clear();
     } else if (
-      node.type === "VarDeclarationWithAssignment" &&
-      node.assignments.type === "Assignment" &&
-      node.assignments.variable.type === "Identifier"
+      node.kind === "VarDeclarationWithAssignment" &&
+      node.assignments.kind === "Assignment" &&
+      node.assignments.variable.kind === "Identifier"
     ) {
       declared.add(node.assignments.variable.name);
     } else if (
-      node.type === "Assignment" &&
-      node.variable.type === "Identifier" &&
+      node.kind === "Assignment" &&
+      node.variable.kind === "Identifier" &&
       !declared.has(node.variable.name)
     ) {
       path.replaceWith(

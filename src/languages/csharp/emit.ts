@@ -4,7 +4,7 @@ import {
   joinGroups,
   needsParensPrecedence,
 } from "../../common/emit";
-import { Expr, IR, isSubtype, toString, ValueType } from "../../IR";
+import { Expr, IR, isSubtype, toString, Type } from "../../IR";
 
 export default function emitProgram(program: IR.Program): string[] {
   return emitExpr(program.body, program);
@@ -15,8 +15,8 @@ function emitExpr(
   parent: IR.Node,
   fragment?: PathFragment
 ): string[] {
-  if (expr.type === "Block") {
-    if (parent.type !== "Program") {
+  if (expr.kind === "Block") {
+    if (parent.kind !== "Program") {
       return [
         "{",
         ...joinGroups(expr.children.map((x) => emitExpr(x, expr, "body"))),
@@ -30,7 +30,7 @@ function emitExpr(
     (fragment === "body" ||
       fragment === "consequent" ||
       fragment === "alternate" ||
-      parent.type === "Block") &&
+      parent.kind === "Block") &&
     !("body" in expr || "consequent" in expr || "alternate" in expr)
   )
     inner.push(";");
@@ -49,8 +49,8 @@ function needsParens(
   if (needsParensPrecedence(expr, parent, fragment)) {
     return true;
   }
-  if (parent.type === "MethodCall" && fragment === "object") {
-    return expr.type === "UnaryOp" || expr.type === "BinaryOp";
+  if (parent.kind === "MethodCall" && fragment === "object") {
+    return expr.kind === "UnaryOp" || expr.kind === "BinaryOp";
   }
   return false;
 }
@@ -78,7 +78,7 @@ function emitExprNoParens(expr: IR.Expr): string[] {
       ...sep
     );
   }
-  switch (expr.type) {
+  switch (expr.kind) {
     case "WhileLoop":
       return emit(
         `while`,
@@ -113,7 +113,7 @@ function emitExprNoParens(expr: IR.Expr): string[] {
     case "ForEach":
     case "ForEachKey":
     case "ForEachPair":
-      throw new Error(`Unexpected node (${expr.type}) while emitting C#`);
+      throw new Error(`Unexpected node (${expr.kind}) while emitting C#`);
     case "ForCLike":
       return emit(
         "for",
@@ -188,7 +188,7 @@ function emitExprNoParens(expr: IR.Expr): string[] {
     case "ListConstructor":
       return emit(
         "new",
-        emitType(expr.valueType),
+        emitType(expr.type),
         "()",
         "{",
         join(expr.exprs, ","),
@@ -197,16 +197,16 @@ function emitExprNoParens(expr: IR.Expr): string[] {
 
     default:
       throw new Error(
-        `Unexpected node while emitting C#: ${expr.type}: ${String(
+        `Unexpected node while emitting C#: ${expr.kind}: ${String(
           "op" in expr ? expr.op : ""
         )}. `
       );
   }
 }
 
-function emitType(type: ValueType | undefined): string {
+function emitType(type: Type | undefined): string {
   if (type === undefined) return "?";
-  switch (type.type) {
+  switch (type.kind) {
     case "text":
       return "string";
     case "integer":
