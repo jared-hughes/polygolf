@@ -41,7 +41,17 @@ const csharpLanguage: Language = {
       ["false", (_) => id("false", true)],
       ["text_length", (x) => propertyCall(x[0], "Length")],
       ["list_push", (x) => methodCall(x[0], [x[1]], "Add")],
-      ["text_split", (x) => methodCall(x[0], [x[1]], "Split")],
+      [
+        "text_split",
+        (x) =>
+          methodCall(
+            x[0],
+            x[1].kind === "StringLiteral" && x[1].value.length == 1
+              ? [{ ...x[1], isCharacter: true }]
+              : [x[1], id("default", true)],
+            "Split"
+          ),
+      ],
       ["int_to_text", (x) => methodCall(x[0], [], "ToString")],
       ["repeat", (x) => functionCall(x, "new String")],
       ["print", (x) => functionCall(x, "Console.Write")],

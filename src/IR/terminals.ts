@@ -30,6 +30,7 @@ export interface IntegerLiteral extends BaseExpr {
  */
 export interface StringLiteral extends BaseExpr {
   kind: "StringLiteral";
+  isCharacter: boolean;
   value: string;
 }
 
@@ -41,8 +42,11 @@ export function int(value: bigint): IntegerLiteral {
   return { kind: "IntegerLiteral", value };
 }
 
-export function stringLiteral(value: string): StringLiteral {
-  return { kind: "StringLiteral", value };
+export function stringLiteral(
+  value: string,
+  isCharacter = false
+): StringLiteral {
+  return { kind: "StringLiteral", value, isCharacter };
 }
 
 export function argv(): Argv {

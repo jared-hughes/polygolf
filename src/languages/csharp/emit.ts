@@ -133,33 +133,31 @@ function emitExprNoParens(expr: IR.Expr): string[] {
     case "Identifier":
       return [expr.name];
     case "StringLiteral":
-      return emitStringLiteral(expr.value, [
-        [
-          `"`,
+      if (expr.isCharacter)
+        return emitStringLiteral(expr.value, [
           [
-            [`\\`, `\\\\`],
-            [`\n`, `\\n`],
-            [`\r`, `\\r`],
-            [`"`, `\\"`],
+            `'`,
+            [
+              [`\\`, `\\\\`],
+              [`\n`, `\\n`],
+              [`\r`, `\\r`],
+              [`'`, `\\'`],
+            ],
           ],
-        ],
-        [
-          `'`,
+        ]);
+      else
+        return emitStringLiteral(expr.value, [
           [
-            [`\\`, `\\\\`],
-            [`\n`, `\\n`],
-            [`\r`, `\\r`],
-            [`'`, `\\'`],
+            `"`,
+            [
+              [`\\`, `\\\\`],
+              [`\n`, `\\n`],
+              [`\r`, `\\r`],
+              [`"`, `\\"`],
+            ],
           ],
-        ],
-        [
-          [`[[`, `]]`],
-          [
-            [`[[`, null],
-            [`]]`, null],
-          ],
-        ],
-      ]);
+          [[`@"`, `"`], [[`"`, null]]],
+        ]);
     case "IntegerLiteral":
       return [expr.value.toString()];
     case "FunctionCall":
