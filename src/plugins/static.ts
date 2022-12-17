@@ -1,14 +1,15 @@
 import {
   getArgs,
   int,
-  IntegerLiteral,
+  isFiniteBound,
   isOpCode,
-  OpCode,
   polygolfOp,
   StringLiteral,
   stringLiteral,
   variants,
+  voidType,
 } from "../IR";
+import { getType } from "../common/getType";
 import { Path, Visitor } from "../common/traverse";
 
 export function golfStringListLiteral(useWhitespaceSplit = true) {
@@ -18,8 +19,8 @@ export function golfStringListLiteral(useWhitespaceSplit = true) {
     exit(path: Path) {
       const node = path.node;
       if (
-        node.type === "ListConstructor" &&
-        node.exprs.every((x) => x.type === "StringLiteral") &&
+        node.kind === "ListConstructor" &&
+        node.exprs.every((x) => x.kind === "StringLiteral") &&
         !golfedStringListLiterals.has(node)
       ) {
         golfedStringListLiterals.set(node, true);
@@ -61,67 +62,33 @@ function getDelim(strings: string[]): string {
   return String(i);
 }
 
-export const evalStaticIntegers: Visitor = {
-  exit(path: Path) {
+export const evalStaticExpr: Visitor = {
+  enter(path: Path) {
     const node = path.node;
     if (
       "op" in node &&
       node.op !== null &&
       isOpCode(node.op) &&
-      node.type !== "MutatingBinaryOp"
+      node.kind !== "MutatingBinaryOp"
     ) {
       const args = getArgs(node);
-      if (args.every((x) => x.type === "IntegerLiteral")) {
-        try {
-          path.replaceWith(
-            int(
-              evalOp(
-                node.op,
-                args.map((x) => (x as IntegerLiteral).value)
-              )
-            )
-          );
-        } catch {}
+      let type = voidType;
+      try {
+        // encoutering nodes that we don't know the type of is fine
+        type = getType(node, path.root.node);
+      } catch {}
+      if (
+        // if the inferred type of the node is a constant integer, replace it with a literal node
+        type.kind === "integer" &&
+        isFiniteBound(type.low) &&
+        type.low === type.high
+      ) {
+        path.replaceWith(int(type.low));
+      } else if (args.every((x) => x.kind === "StringLiteral")) {
+        const argsVals = args.map((x) => (x as StringLiteral).value);
+        if (node.op === "text_concat")
+          path.replaceWith(stringLiteral(argsVals[0].concat(argsVals[1])));
       }
     }
   },
 };
-
-function evalOp(op: OpCode, values: bigint[]): bigint {
-  const a = values[0];
-  switch (op) {
-    case "neg":
-      return -a;
-    case "bit_not":
-      return -1n - a;
-    case "abs":
-      return a < 0n ? -a : a;
-  }
-  const b = values[1];
-  switch (op) {
-    case "min":
-      return a < b ? a : b;
-    case "max":
-      return a > b ? a : b;
-    case "add":
-      return a + b;
-    case "sub":
-      return a - b;
-    case "mul":
-      return a * b;
-    case "div":
-      return floorDiv(a, b);
-    case "trunc_div":
-      return a / b;
-    case "mod":
-      return a - b * floorDiv(a, b);
-    case "rem":
-      return a - b * (a / b);
-  }
-  throw new Error(`Unsupported op ${op}.`);
-}
-
-function floorDiv(a: bigint, b: bigint): bigint {
-  const res = a / b;
-  return a < 0 !== b < 0 ? res - 1n : res;
-}
