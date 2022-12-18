@@ -3,6 +3,7 @@ import { assignment, varDeclarationWithAssignment } from "../../IR";
 
 const declared: Set<string> = new Set<string>();
 export const addVarDeclarations = {
+  name: "addVarDeclarations",
   enter(path: Path) {
     const node = path.node;
     if (node.kind === "Program") {

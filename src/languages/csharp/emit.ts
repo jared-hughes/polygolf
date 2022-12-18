@@ -4,7 +4,7 @@ import {
   joinGroups,
   needsParensPrecedence,
 } from "../../common/emit";
-import { Expr, IR, isSubtype, toString, Type } from "../../IR";
+import { Expr, IR, isSubtype, toString, Type, type as newType } from "../../IR";
 
 export default function emitProgram(program: IR.Program): string[] {
   return emitExpr(program.body, program);
@@ -208,7 +208,7 @@ function emitType(type: Type | undefined): string {
     case "text":
       return "string";
     case "integer":
-      if (isSubtype(type, "int64")) return "int";
+      if (isSubtype(type, newType("int64"))) return "int";
       break;
     case "boolean":
       return "string";

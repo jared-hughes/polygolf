@@ -15,6 +15,7 @@ import { Path, Visitor } from "../common/traverse";
 export function golfStringListLiteral(useWhitespaceSplit = true) {
   const golfedStringListLiterals = new WeakMap();
   return {
+    name: "golfStringListLiteral",
     generatesVariants: true,
     exit(path: Path) {
       const node = path.node;
@@ -63,6 +64,7 @@ function getDelim(strings: string[]): string {
 }
 
 export const evalStaticExpr: Visitor = {
+  name: "evalStaticExpr",
   enter(path: Path) {
     const node = path.node;
     if (
