@@ -47,6 +47,8 @@ export const BinaryOpCodeArray = [
   "int_to_bin_aligned",
   "int_to_hex_aligned",
   "simplify_fraction",
+  "call",
+  "inverse_call",
 ] as const;
 export type BinaryOpCode = typeof BinaryOpCodeArray[number];
 
@@ -136,6 +138,10 @@ export function flipOpCode(op: BinaryOpCode): BinaryOpCode | null {
       return "geq";
     case "geq":
       return "leq";
+    case "call":
+      return "inverse_call";
+    case "inverse_call":
+      return "call";
   }
   return null;
 }

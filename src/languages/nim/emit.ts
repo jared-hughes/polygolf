@@ -173,6 +173,29 @@ function needsParens(
   return false;
 }
 
+function getPrecedence(expr: IR.Expr): number {
+  if (expr.kind === "BinaryOp") {
+    return getPrecedenceOp(expr.name);
+  }
+}
+
+function getPrecedenceOp(opname: string): number {
+  switch (opname) {
+    case "^":
+      return 10;
+    case "*":
+    case "div":
+    case "mod":
+    case "%%":
+    case "/%":
+      return 9;
+  }
+}
+
+function isRightAssociative(expr: IR.Expr): boolean {
+  return expr.kind === "BinaryOp" && expr.op === "call";
+}
+
 function emitExprNoParens(
   expr: IR.Expr,
   expressionContinues: boolean = false
